@@ -9,7 +9,7 @@ export default function WoodcuttingPage() {
 
 
   const buttons = [
-    { label: "Chop", onClick: () => ctx?.performSkillAction('woodcutting', 'woodcutting', 'wood', 10, 500), variant: "primary" },
+    { label: "Chop", actionType: "woodcutting", onClick: () => ctx?.performSkillAction('woodcutting', 'woodcutting', 'wood', 10, 500), variant: "primary", actionDurationMs: 500 },
   ];
 
   return (

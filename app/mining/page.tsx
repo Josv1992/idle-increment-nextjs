@@ -9,7 +9,7 @@ export default function MiningPage() {
   const handleSkillAction = () => ctx?.performSkillAction('mining', 'mining', 'ore', 10, 500);
 
   const buttons = [
-    { label: "Mine", onClick: handleSkillAction, variant: "primary" },
+    { label: "Mine", actionType: "mining", onClick: handleSkillAction, variant: "primary" },
   ];
 
   return (

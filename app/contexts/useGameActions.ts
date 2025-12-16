@@ -27,7 +27,7 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
     setGame((g) => ({ ...g, playerAction: null }));
   }, [setGame]);
 
-  const doSkillActionTick = useCallback((skillName: string, actionType: string, itemType: string, amountofXP: number) => {
+  const doSkillActionTick = useCallback((skillName: string, actionType: string, itemType: string, amountofXP: number, duration: number) => {
     setGame((g) => {
       const next = tickSkillAction(g, skillName, actionType, itemType, amountofXP);
       const amount = 1;
@@ -41,6 +41,17 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
 
       return next;
     });
+
+    // dispatch asynchronously after state update/render to avoid cross-component updates during render
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        try {
+          window.dispatchEvent(new CustomEvent("game:skillTick", {
+            detail: { skillName, actionType, itemType, duration },
+          }));
+        } catch (e) { /* no event */ }
+      }, 0);
+    }
   }, [setGame]);
 
   const performSkillAction = useCallback((skillName: string, actionType: string, itemType: string, amountofXP: number, baseDurationMs: number) => {
@@ -53,8 +64,9 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
 
     const placeholderSkillLevel = 3;
 
+    // const duration = baseDurationMs  * (1 - Math.min(0.5, (placeholderSkillLevel - 1) * 0.05)); // TODO: improve calculation
 
-    const duration = baseDurationMs  * (1 - Math.min(0.5, (placeholderSkillLevel - 1) * 3));
+    const duration = baseDurationMs;
 
     // Ensure any previous interval is cleared (defensive)
     if (actionIntervalRef.current) {
@@ -68,8 +80,8 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
     playerActionRef.current = actionType;
 
     // perform the first tick immediately, then schedule repeating ticks
-    doSkillActionTick(skillName, actionType, itemType, amountofXP);
-    actionIntervalRef.current = setInterval(() => doSkillActionTick(skillName, actionType, itemType, amountofXP), duration);
+    doSkillActionTick(skillName, actionType, itemType, amountofXP, duration);
+    actionIntervalRef.current = setInterval(() => doSkillActionTick(skillName, actionType, itemType, amountofXP, duration), duration);
   }, [doSkillActionTick, game.playerAction, game.inventory.length, stopAction, game, setGame]);
 
   const levelUpSkill = useCallback((skill: string) => {
