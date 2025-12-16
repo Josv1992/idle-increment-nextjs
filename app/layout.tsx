@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StateContextProvider } from "./contexts/StateContext";
+import Menu from "./components/Menu";
+import GameScreen from "./components/GameScreen";
+import Skills from "./components/SkillOverview";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,10 +28,37 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <StateContextProvider>{children}</StateContextProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <StateContextProvider>
+          <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-900">
+            {/* Header */}
+            <header className="from-slate-800 to-slate-900 h-16 shadow-md flex items-center px-6">
+              <h1 className="text-2xl md:text-3xl font-bold text-white">Idle Increment</h1>
+            </header>
+
+            {/* Main layout: sidebar + content */}
+            <div className="flex flex-1">
+              <aside className="w-64 border-r border-slate-200 dark:border-slate-800">
+                <Menu />
+              </aside>
+
+              <main className="flex-1 p-6 overflow-auto">
+                <div className="sticky top-4">
+                  {/* Game screen lives here and is visible on all pages */}
+                  <div className="h-full">
+                    {/* GameScreen client component */}
+                    <GameScreen />
+                  </div>
+                </div>
+                {children}
+                </main>
+
+              <aside className="w-80 border-l border-slate-200 dark:border-slate-800 p-4">
+                <Skills></Skills>
+              </aside>
+            </div>
+          </div>
+        </StateContextProvider>
       </body>
     </html>
   );
