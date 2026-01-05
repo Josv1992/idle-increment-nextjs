@@ -17,8 +17,7 @@ const StateContextProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     totalXP: 0,
     playerAction: null,
     inventory: [],
-    bankedOre: 0,
-    bankedWood: 0,
+    playerBankInventory: [],
     bankingProgress: 0,
   });
 

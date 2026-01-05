@@ -44,7 +44,11 @@ export default function ButtonGrid({ buttons }: { buttons: ButtonAction[] }) {
     };
 
     window.addEventListener("game:skillTick", handler);
-    return () => window.removeEventListener("game:skillTick", handler);
+    window.addEventListener("game:skillStart", handler);
+    return () => {
+      window.removeEventListener("game:skillTick", handler);
+      window.removeEventListener("game:skillStart", handler);
+    };
   }, [safeButtons]);
 
 
@@ -61,7 +65,6 @@ export default function ButtonGrid({ buttons }: { buttons: ButtonAction[] }) {
               key={btn.actionType}
               onClick={() => {
                 btn.onClick?.();
-                animateButton(btn.actionType, duration);
               }}
               className="relative overflow-hidden bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition-transform"
             >

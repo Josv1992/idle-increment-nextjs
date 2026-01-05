@@ -1,4 +1,4 @@
-import { GameState, InventoryItem } from "./state.types";
+import { GameState, Item } from "./state.types";
 import { addItemsToInventory, emptyInventoryToBank, addXPForSkill } from "./state.reducer";
 
 // These are higher-level helpers that can be used by components or hooks.
@@ -6,8 +6,8 @@ import { addItemsToInventory, emptyInventoryToBank, addXPForSkill } from "./stat
 // that callers can use with `setGame`.
 
 export function tickSkillAction(game: GameState, skillName: string, actionType: string, itemType: string, amountofXP: number) {
-  const items: InventoryItem[] = [];
-  items.push({ type: itemType, id: `${itemType}-${Date.now()}-skillaction` });
+  const items: Item[] = [];
+  items.push({ type: itemType, id: `${itemType}-${Date.now()}`, icon: "🪙" });
   let next = addItemsToInventory(game, items);
 
   next = addXPForSkill(next, skillName, actionType, amountofXP);

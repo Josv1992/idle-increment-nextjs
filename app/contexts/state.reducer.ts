@@ -1,24 +1,23 @@
-import { GameState, InventoryItem, nextXPThreshold } from "./state.types";
+import { GameState, Item, nextXPThreshold, INVENTORY_SLOTS } from "./state.types";
 
 // Pure reducer-style helper functions for manipulating GameState immutably
 
-export function addItemsToInventory(state: GameState, items: InventoryItem[]) {
+export function addItemsToInventory(state: GameState, items: Item[]) {
   const inventory = [...state.inventory];
-  for (const it of items) {
-    if (inventory.length >= 28) break; // keep a hard cap; constants file has the canonical value
-    inventory.push(it);
+  for (const item of items) {
+    if (inventory.length >= INVENTORY_SLOTS) break; 
+    inventory.push(item);
   }
   return { ...state, inventory };
 }
 
+// TODO: make it so player walks to bank, deposits all items immediately, and then walks back to previous action
+
 export function emptyInventoryToBank(state: GameState) {
-  const oreCount = state.inventory.filter((i) => i.type === "ore").length;
-  const woodCount = state.inventory.filter((i) => i.type === "wood").length;
   return {
     ...state,
     inventory: [],
-    bankedOre: state.bankedOre + oreCount,
-    bankedWood: state.bankedWood + woodCount,
+    playerBankInventory: [...(state.playerBankInventory ?? []), ...state.inventory],
   };
 }
 

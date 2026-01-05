@@ -1,14 +1,14 @@
-export interface InventoryItem {
+export interface Item {
   type: string;
   id: string;
+  icon: string;
 }
 
 export interface GameState {
   totalXP?: number;
   playerAction: string | null;
-  inventory: InventoryItem[];
-  bankedOre: number;
-  bankedWood: number;
+  inventory: Item[];
+  playerBankInventory?: Item[];
   bankingProgress: number;
   skills?: {
     [key: string]: {

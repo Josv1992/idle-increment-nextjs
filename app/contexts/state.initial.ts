@@ -10,8 +10,7 @@ export const createInitialGameState = (): GameState => {
     totalXP: 0,
     playerAction: null,
     inventory: [],
-    bankedOre: 0,
-    bankedWood: 0,
+    playerBankInventory: [],
     bankingProgress: 0,
     skills,
   };

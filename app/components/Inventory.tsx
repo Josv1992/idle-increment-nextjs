@@ -34,8 +34,7 @@ export default function Inventory() {
         })}
       </div>
       <div className="text-xs text-slate-500 mt-2 space-y-1">
-        <div>Banked Ore: {game.bankedOre}</div>
-        <div>Banked Wood: {game.bankedWood}</div>
+        <div>Bank Inventory: </div>
       </div>
     </div>
   );

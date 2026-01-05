@@ -14,7 +14,17 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
   const actionBeforeBankingRef = useRef<{ type: string; amount: number } | null>(null);
   const performBankingRef = useRef<(() => void) | null>(null);
   const playerActionRef = useRef<string | null>(null);
+  const queuedActionRef = useRef<{
+    skillName: string;
+    actionType: string;
+    itemType: string;
+    amountofXP: number;
+    baseDurationMs: number;
+  } | null>(null);
+  const doSkillActionTickRef = useRef<((...args: any[]) => void) | null>(null);
   const performSkillActionRef = useRef<((amount?: number) => void) | null>(null);
+
+
 
   // stop any ongoing action
   const stopAction = useCallback(() => {
@@ -25,6 +35,45 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
     playerActionRef.current = null;
     setGame((g) => ({ ...g, playerAction: null }));
   }, [setGame]);
+
+
+  // helper to start an action (does not preempt an existing running action)
+  const startAction = useCallback((skillName: string, actionType: string, itemType: string, amountofXP: number, baseDurationMs: number) => {
+    // defensive: clear any existing interval
+    if (actionIntervalRef.current) {
+      clearInterval(actionIntervalRef.current as unknown as number);
+      actionIntervalRef.current = null;
+    }
+
+    setGame((g) => ({ ...g, playerAction: actionType }));
+    playerActionRef.current = actionType;
+
+    // notify UI an action actually started (so animations can begin immediately)
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        try {
+          window.dispatchEvent(new CustomEvent("game:skillStart", { detail: { actionType, duration: baseDurationMs } }));
+        } catch (e) {}
+      }, 0);
+    }
+
+    // schedule repeating ticks; setInterval waits for the duration before first tick
+    actionIntervalRef.current = setInterval(() => {
+      if (doSkillActionTickRef.current) doSkillActionTickRef.current(skillName, actionType, itemType, amountofXP, baseDurationMs);
+
+      // if another action was queued while this action was running, switch now
+      const queued = queuedActionRef.current;
+      if (queued) {
+        queuedActionRef.current = null;
+        if (actionIntervalRef.current) {
+          clearInterval(actionIntervalRef.current as unknown as number);
+          actionIntervalRef.current = null;
+        }
+        // start the queued action
+        startAction(queued.skillName, queued.actionType, queued.itemType, queued.amountofXP, queued.baseDurationMs);
+      }
+    }, baseDurationMs);
+  }, [setGame]); 
 
   const doSkillActionTick = useCallback((skillName: string, actionType: string, itemType: string, amountofXP: number, duration: number) => {
     console.log('doing skill action tick: ', skillName, actionType, itemType, amountofXP, duration);
@@ -54,15 +103,20 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
     }
   }, [setGame]);
 
+  doSkillActionTickRef.current = doSkillActionTick;
+
   const performSkillAction = useCallback((skillName: string, actionType: string, itemType: string, amountofXP: number, baseDurationMs: number) => {
     console.log('action ref: ', playerActionRef.current)
     
-    // Switches actions
+    // Switches actions: if an action is already in progress, queue this one
     if (playerActionRef.current) {
       console.log("An action is already in progress:", playerActionRef.current);
-      // TODO: queue the action and perform after current action ends
-      clearInterval(actionIntervalRef.current as unknown as number);
-      actionIntervalRef.current = null;
+      if (playerActionRef.current === actionType) {
+        // already doing this action
+        return;
+      }
+      queuedActionRef.current = { skillName, actionType, itemType, amountofXP, baseDurationMs };
+      return;
     }
 
     if (game.inventory.length >= INVENTORY_SLOTS) {
@@ -83,15 +137,8 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
       actionIntervalRef.current = null;
     }
 
-    setGame((g) => ({ ...g, playerAction: actionType }));
-
-    // update ref synchronously so rapid clicks can't start another action
-    playerActionRef.current = actionType;
-
-    // perform the first tick immediately, then schedule repeating ticks
-    // TODO: change it so that the first tick happens after duration, to align with the interval
-    doSkillActionTick(skillName, actionType, itemType, amountofXP, duration);
-    actionIntervalRef.current = setInterval(() => doSkillActionTick(skillName, actionType, itemType, amountofXP, duration), duration); // TODO: hier
+    // start the action but let the first tick occur after `duration`
+    startAction(skillName, actionType, itemType, amountofXP, duration);
     console.log(actionIntervalRef.current);
   }, [doSkillActionTick, game.playerAction, game.inventory.length, stopAction, game, setGame]);
 
