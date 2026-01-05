@@ -63,7 +63,6 @@ export default function ButtonGrid({ buttons }: { buttons: ButtonAction[] }) {
                 btn.onClick?.();
                 animateButton(btn.actionType, duration);
               }}
-              disabled={isActive}
               className="relative overflow-hidden bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition-transform"
             >
               <span

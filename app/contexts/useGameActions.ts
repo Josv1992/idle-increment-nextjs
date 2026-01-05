@@ -12,7 +12,6 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
   const bankingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bankingProgressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const actionBeforeBankingRef = useRef<{ type: string; amount: number } | null>(null);
-  const performCutWoodRef = useRef<((amount?: number) => void) | null>(null);
   const performBankingRef = useRef<(() => void) | null>(null);
   const playerActionRef = useRef<string | null>(null);
   const performSkillActionRef = useRef<((amount?: number) => void) | null>(null);
@@ -28,6 +27,7 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
   }, [setGame]);
 
   const doSkillActionTick = useCallback((skillName: string, actionType: string, itemType: string, amountofXP: number, duration: number) => {
+    console.log('doing skill action tick: ', skillName, actionType, itemType, amountofXP, duration);
     setGame((g) => {
       const next = tickSkillAction(g, skillName, actionType, itemType, amountofXP);
       const amount = 1;
@@ -55,8 +55,15 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
   }, [setGame]);
 
   const performSkillAction = useCallback((skillName: string, actionType: string, itemType: string, amountofXP: number, baseDurationMs: number) => {
-    // Prevent starting a new action if one is already in progress
-    if (playerActionRef.current) return;
+    console.log('action ref: ', playerActionRef.current)
+    
+    // Switches actions
+    if (playerActionRef.current) {
+      console.log("An action is already in progress:", playerActionRef.current);
+      // TODO: queue the action and perform after current action ends
+      clearInterval(actionIntervalRef.current as unknown as number);
+      actionIntervalRef.current = null;
+    }
 
     if (game.inventory.length >= INVENTORY_SLOTS) {
       return;
@@ -67,9 +74,11 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
     // const duration = baseDurationMs  * (1 - Math.min(0.5, (placeholderSkillLevel - 1) * 0.05)); // TODO: improve calculation
 
     const duration = baseDurationMs;
-
+    
+    console.log('actionIntervalRef: ', actionIntervalRef);
     // Ensure any previous interval is cleared (defensive)
     if (actionIntervalRef.current) {
+      console.log("Clearing previous action interval");
       clearInterval(actionIntervalRef.current as unknown as number);
       actionIntervalRef.current = null;
     }
@@ -80,8 +89,10 @@ export default function useGameActions(game: GameState, setGame: SetGame) {
     playerActionRef.current = actionType;
 
     // perform the first tick immediately, then schedule repeating ticks
+    // TODO: change it so that the first tick happens after duration, to align with the interval
     doSkillActionTick(skillName, actionType, itemType, amountofXP, duration);
-    actionIntervalRef.current = setInterval(() => doSkillActionTick(skillName, actionType, itemType, amountofXP, duration), duration);
+    actionIntervalRef.current = setInterval(() => doSkillActionTick(skillName, actionType, itemType, amountofXP, duration), duration); // TODO: hier
+    console.log(actionIntervalRef.current);
   }, [doSkillActionTick, game.playerAction, game.inventory.length, stopAction, game, setGame]);
 
   const levelUpSkill = useCallback((skill: string) => {
